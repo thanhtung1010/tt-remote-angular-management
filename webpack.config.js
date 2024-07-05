@@ -5,7 +5,7 @@ module.exports = withModuleFederationPlugin({
   name: 'tt-remote-angular-management',
 
   exposes: {
-    './Component': './src/app/app.component.ts',
+    './module': './src/app/app.component.ts',
   },
 
   shared: {
