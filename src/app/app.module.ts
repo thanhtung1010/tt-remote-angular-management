@@ -1,13 +1,29 @@
 import { NgModule } from "@angular/core";
-import { Route, RouterModule, Routes } from "@angular/router";
-import { AppComponent } from "./app.component";
+import { Route, RouterModule } from "@angular/router";
 import { ROUTE, SharedModule } from 'tt-library-angular-porfolio';
+import { AppComponent } from "./app.component";
 
 const routes: Route[] = [
   {
-    path: '',
-    component: AppComponent,
-  }
+    path: ROUTE.CMS_MAIN,
+    loadComponent: () => import('./components/home/home.component')
+      .then(c => c.HomeComponent),
+  },
+  {
+    path: ROUTE.CMS_MANAGEMENT_HOME_PAGE,
+    loadComponent: () => import('./components/manager-home-page/manager-home-page.component')
+      .then(c => c.ManagerHomePageComponent),
+  },
+  {
+    path: ROUTE.CMS_MANAGEMENT_ABOUT_ME_PAGE,
+    loadComponent: () => import('./components/manager-about-me-page/manager-about-me-page.component')
+      .then(c => c.ManagerAboutMePageComponent),
+  },
+  {
+    path: '**',
+    pathMatch: 'full',
+    redirectTo: ROUTE.CMS_MAIN,
+  },
 ];
 
 @NgModule({

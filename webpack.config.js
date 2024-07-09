@@ -2,10 +2,10 @@ const { shareAll, withModuleFederationPlugin } = require('@angular-architects/mo
 
 module.exports = withModuleFederationPlugin({
 
-  name: 'tt-remote-angular-management',
+  name: '@tt-management',
 
   exposes: {
-    './module': './src/app/app.component.ts',
+    './module': './src/app/app.module.ts',
   },
 
   shared: {
