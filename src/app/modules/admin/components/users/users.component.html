@@ -1,0 +1,207 @@
+<tt-table-layout
+  [props]="{data: userData, showExpand: false, minWidth: 980, showTable: !loading.divisions}"
+  (oChangeParams)="onSearch($event)" [loading]="loading.list" (oRefresh)="onRefresh()" (oReset)="onReset()">
+  <ng-container filter-main>
+    <div nz-col nzXXl="8" nzXl="8" nzLg="8" nzSm="24" nzXs="24" class="tt-pr-10">
+      <tt-search-input-layout [label]="'LABEL.USER_INPUT'">
+        <ng-container body>
+          <input maxlength="120" nz-input placeholder="{{'PLACEHOLDER.USER_INPUT' | translate}}" (keyup.enter)="onSearch()" />
+        </ng-container>
+      </tt-search-input-layout>
+    </div>
+    <div nz-col nzXXl="8" nzXl="8" nzLg="8" nzSm="24" nzXs="24" class="tt-pr-10">
+      <tt-select-list-layout [label]="'LABEL.ROLE_SELECT'">
+        <ng-container body>
+          <nz-select [nzPlaceHolder]="'PLACEHOLDER.ROLE_SELECT' | translate" [nzSuffixIcon]="icon" nzAllowClear (ngModelChange)="onSearch()" nzShowSearch>
+            <nz-option [nzValue]="item.code" [nzLabel]="item.name" *ngFor="let item of data.roles"></nz-option>
+          </nz-select>
+        </ng-container>
+      </tt-select-list-layout>
+    </div>
+  </ng-container>
+  <ng-container filter-button>
+    <ng-container [ngTemplateOutlet]="buttons"></ng-container>
+  </ng-container>
+  <ng-container filter-right-button>
+    <!-- <app-export-file [url]="urlExport" [param]="getExportData" [type]="TYPE_OF_FILE.MS_EXCEL"
+      [featureName]="'ADMIN.USER_MNGT.title' | translate">
+    </app-export-file> -->
+
+    <a (click)="onAdd()" class="btn" nz-button nzType="text" area-name="add" [nzTooltipTitle]="'BUTTON.ADD' | translate"
+      nzTooltipPlacement="top" nz-tooltip>
+      <img class="tt-mr-10" loading="lazy" [src]="'add-outline' | TTAssetsLink:'svg'" [alt]="'add-outline.svg'" style="height: 25px; width: 25px;">
+    </a>
+  </ng-container>
+  <ng-container custom-body>
+    <nz-table #stc90DaysTable [nzData]="userData" [nzShowPagination]="false" [nzLoading]="loading.list"
+      [nzSize]="'small'" [nzScroll]="data.nzScroll" [nzFrontPagination]="false" [nzVirtualItemSize]="20">
+      <!-- (nzQueryParams)="onSearchTableParams($event)"> -->
+      <thead>
+        <tr>
+          <!-- <th [nzWidth]="'50px'" *ngIf="data.list.length > 0" nzLeft>
+            <ng-container *ngIf="data.showCheckAll">
+              <label nz-checkbox [(ngModel)]="data.checkAll" (ngModelChange)="onChangeCheckBox($event, -1)"></label>
+            </ng-container>
+          </th> -->
+          <ng-container
+            *ngFor="let header of tableHeader; let _last = last; let _first=first; let index=index">
+            <th *ngIf="header.width && (dataColumnShows$ | async)?.includes(header.field)"
+              [nzAlign]="header.align ? header.align: 'left'" [nzLeft]="!!header.nzLeft"
+              [nzWidth]="header.width ? header.width + 'px' : ''">
+              <!-- [nzSortOrder]="header?.sortOrder || null" [nzColumnKey]="header.field" [nzSortFn]="true"
+              [nzShowSort]="columnShowSort.includes(header.field)"> -->
+              {{ header.title | translate }}
+            </th>
+          </ng-container>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- <ng-container *ngFor="let item of data.list; let idx = index; let lst = last"> -->
+        <ng-template nz-virtual-scroll let-item let-idx="index">
+          <tr>
+            <td *ngIf="userData.length > 0" nzLeft>
+              <ng-container *ngIf="item.showCheckBox">
+                <label nz-checkbox [(ngModel)]="item.select"></label>
+              </ng-container>
+            </td>
+            <td *ngIf="(dataColumnShows$ | async)?.includes(columnsField.fullName)">
+              {{ item.full_name }}
+            </td>
+            <td *ngIf="(dataColumnShows$ | async)?.includes(columnsField.email)">
+              {{ item.email }}
+            </td>
+            <td *ngIf="(dataColumnShows$ | async)?.includes(columnsField.phoneNumber)">
+              {{ item.phone_number }}
+            </td>
+            <td *ngIf="(dataColumnShows$ | async)?.includes(columnsField.role)">
+              {{ item.permission }}
+            </td>
+            <td *ngIf="(dataColumnShows$ | async)?.includes(columnsField.action)">
+              <!-- {{ item.action }} -->
+            </td>
+          </tr>
+        </ng-template>
+        <!-- </ng-container> -->
+      </tbody>
+    </nz-table>
+  </ng-container>
+</tt-table-layout>
+
+<ng-template #buttons>
+  <button [nzLoading]="loading.list" class="tt-mw-80 pen-mt-5 pen-ml-5" nz-button nzType="primary" nzShape="round"
+    (click)="onSearch()">
+    {{'BUTTON.SEARCH' | translate}}
+  </button>
+</ng-template>
+
+<nz-modal nzWidth="50vw" [nzCloseIcon]="''" [(nzVisible)]="isVisibleModal" (nzOnCancel)="isVisibleModal = false"
+  (nzOnOk)="isVisibleModal = false" [nzMaskClosable]="false" [nzClassName]="'pen-md'">
+  <div *nzModalTitle class="pen-md-title">
+    <!-- {{'ADMIN.USER_MNGT.title_modal' | translate}} -
+    {{(data.userMd !== undefined && data.userMd['userId'] ? 'COMMON.EDIT' : 'COMMON.ADD') | translate}} -->
+  </div>
+  <ng-container *nzModalContent class="pen-md-content">
+    <form autocomplete="off" nz-row nz-form (ngSubmit)="submitMdForm()" [formGroup]="validateMdForm">
+      <input autocomplete="false" type="hidden" />
+      <ng-container *ngIf="!loading.detail">
+        <!-- <nz-form-item nz-col nzSpan="24" class="pen-pr-10 pen-mb-0">
+          <nz-form-control nzSpan="24" [nzErrorTip]="controlErrorTpl">
+            <label nz-col class="pen-label pen-mb-10 pen-block pen-required">{{'TABLE.FULL_NAME' | translate}}</label>
+            <nz-input-group class="pen-input-wrapper">
+              <input formControlName="fullName" type="text" nz-input [attr.maxlength]="255"
+                [attr.placeholder]="'TABLE.FULL_NAME' | translate" />
+            </nz-input-group>
+          </nz-form-control>
+        </nz-form-item> -->
+        <div nz-row style="width: 100%">
+          <!-- User Name -->
+          <!-- <nz-form-item nz-col nzXXl="6" nzXl="6" nzLg="6" nzMd="24" nzXs="24" class="pen-pr-10">
+            <nz-form-control nzSpan="24" [nzErrorTip]="controlErrorTpl">
+              <label nz-col class="pen-label pen-mb-10 pen-block pen-required">{{'TABLE.USER_NAME' | translate}}</label>
+              <nz-input-group class="pen-input-wrapper">
+                <input *ngIf="!data.userMd.userId" formControlName="username" type="text" nz-input autocomplete="off"
+                  [attr.placeholder]="'TABLE.USER_NAME' | translate" [attr.maxlength]="lengthUI.max_input" />
+                <input nz-input disabled value="{{data.userMd.username}}" *ngIf="data.userMd.userId" nz-input />
+              </nz-input-group>
+            </nz-form-control>
+          </nz-form-item> -->
+          <!-- Email -->
+          <!-- <nz-form-item nz-col nzXXl="6" nzXl="6" nzLg="6" nzMd="24" nzXs="24" class="pen-pr-10">
+            <nz-form-control nzSpan="24" [nzErrorTip]="controlErrorTpl">
+              <label nz-col
+                [classList]="'pen-label pen-mb-10 pen-block ' + (isExtUserChecked ? '' : 'pen-required')">{{'TABLE.EMAIL'
+                | translate}}</label>
+              <nz-input-group class="pen-input-wrapper">
+                <input formControlName="email" [attr.maxlength]="lengthUI.max_input" nz-input
+                  [attr.placeholder]="'TABLE.EMAIL' | translate" />
+              </nz-input-group>
+            </nz-form-control>
+          </nz-form-item> -->
+          <!-- Role -->
+          <!-- <div nz-col nzXXl="6" nzXl="6" nzLg="6" nzMd="24" nzXs="24" class="pen-pr-10">
+            <nz-form-item nz-col nzSpan="24" class="pen-pr-10">
+              <nz-form-control nzSpan="24" [nzErrorTip]="controlErrorTpl">
+                <app-select-list-layout [label]="'ADMIN.ROLE.title'" [required]="true">
+                  <ng-container body>
+                    <nz-select formControlName="roleName" [nzPlaceHolder]="'ADMIN.ROLE.title' | translate"
+                      [nzSuffixIcon]="icon" nzShowSearch (ngModelChange)="onChangeRole($event)">
+                      <nz-option [nzValue]="item.code" [nzLabel]="item.name" *ngFor="let item of data.roles">
+                      </nz-option>
+                    </nz-select>
+                  </ng-container>
+                </app-select-list-layout>
+              </nz-form-control>
+            </nz-form-item>
+          </div> -->
+        </div>
+      </ng-container>
+      <!-- <ng-container *ngIf="loading.detail">
+        <div class="pen-mh-200 pen-align-center" style="width: 100%;">
+          <app-loading></app-loading>
+        </div>
+      </ng-container> -->
+
+      <!-- <ng-template #controlErrorTpl let-control>
+        <ng-container [ngSwitch]="firstErrorsByControl(control)">
+          <ng-container *ngSwitchCase="'required'">
+            {{'error.required' | translate}}
+          </ng-container>
+          <ng-container *ngSwitchCase="'emailPattern'">
+            {{'error.email' | translate}}
+          </ng-container>
+          <ng-container *ngSwitchCase="'minlength'">
+            {{'error.minlength' |
+            translate:{count: 8} }}</ng-container>
+          <ng-container *ngSwitchCase="'whitespace'">
+            {{'error.whitespace' | translate:{count: 8} }}
+          </ng-container>
+          <ng-container *ngSwitchDefault>
+          </ng-container>
+        </ng-container>
+      </ng-template> -->
+    </form>
+  </ng-container>
+  <div *nzModalFooter class="pen-md-footer">
+    <!-- <button class="pen-mw-100" nz-button nzType="default" nzShape="round" (click)="onToggleModal(false)">
+      {{ 'BTN_CANCEL' | translate}}
+    </button>
+    <button [nzLoading]="loading.saving" [disabled]="loading.detail && !validateMdForm.valid" class="pen-mw-100"
+      nz-button nzType="primary" nzShape="round" (click)="onSaveUser()" BtnPermission
+      [ActionType]="[systemAction.CREATE, systemAction.UPDATE]">
+      {{ (data.userMd['userId'] ? 'BTN_SAVE' : 'BTN_ADD') | translate}}
+    </button> -->
+  </div>
+</nz-modal>
+<ng-template #icon>
+  <svg style="width: 8px; height: 8px;">
+    <use xlink:href="#play-icon-down"></use>
+  </svg>
+</ng-template>
+
+<!-- #region For TW only -->
+<ng-template #showError let-field="field">
+  <ng-container *ngIf="field.errors.indexOf('required') > -1">
+    <p class="pen-red pen-mt-5 pen-mb-0">{{'error.required' | translate}}</p>
+  </ng-container>
+</ng-template>
+<!-- #endregion -->

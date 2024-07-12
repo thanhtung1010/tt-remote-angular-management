@@ -1,0 +1,176 @@
+<!-- <app-table-layout [loading]="loading.list" (oChangeParams)="onSearch($event)"
+  [props]="{data: data.list, showExpand: false, param: data.param, showDefaultButtons: false}">
+  <ng-container filter-right-button>
+    <a (click)="onAdd()" class="btn" nz-button nzType="text" area-name="add" [nzTooltipTitle]="'BTN_ADD' | translate"
+      nzTooltipPlacement="top" nz-tooltip BtnPermission [ActionType]="systemAction.CREATE">
+      <svg [outerHTML]="'add-outline' | svgIcon:{class:'icon'}"></svg>
+    </a>
+  </ng-container>
+  <ng-container header>
+    <tr>
+      <th [attr.colspan]="header.colSpan" *ngFor="let header of tableHeader;let _last = last;let _first=first"
+        [ngClass]="{'pen-align-center':_last}" [style.text-align]="_first ? 'left': ''">
+        {{ header.title | translate}}
+      </th>
+    </tr>
+  </ng-container>
+  <ng-container body>
+    <tr *ngFor="let item of data.list; let idx = index; let lst = last">
+      <td [attr.colspan]="tableHeader[0].colSpan">{{ item.name }}</td>
+      <td [attr.colspan]="tableHeader[1].colSpan">{{ item.createdAt | dateTimeLabel }}</td>
+      <td [attr.colspan]="tableHeader[2].colSpan">{{ item.createdBy }}</td>
+      <td [attr.colspan]="tableHeader[3].colSpan" class="pen-align-center">
+        <div style="display: flex;" class="pen-mw-200 pen-align-center"
+          *ngIf="item.code && item.code.toUpperCase() !== 'ADMIN'">
+          <a nz-button nzType="primary" (click)="onUpdate(item)" BtnPermission [ActionType]="systemAction.UPDATE">
+            {{'BTN_UPDATE' | translate}}
+          </a>
+          &nbsp;
+          <a class="pen-mw-80" nz-button nzType="default" nzDanger="false" nz-popconfirm nzDanger
+            [nzPopconfirmTitle]="'COMMON.CONFIRM_ACTION' | translate" (nzOnConfirm)="onDelete(item)"
+            nzPopconfirmPlacement="topRight" BtnPermission [ActionType]="systemAction.DELETE"
+            [nzCancelText]="'MODAL.CANCEL' | translate" [nzOkText]="'MODAL.OK' | translate">
+            {{'BTN_DELETE' | translate}}
+          </a>
+        </div>
+      </td>
+    </tr>
+  </ng-container>
+</app-table-layout>
+
+<ng-template #buttons>
+  <button class="pen-mw-80 pen-mt-5 pen-ml-5" nz-button nzType="primary" nzShape="round" (click)="onSearch()">
+    {{'BTN_SEARCH' | translate}}
+  </button>
+</ng-template>
+
+<nz-modal nzWidth="60vw" [nzCloseIcon]="''" [(nzVisible)]="isVisibleModal" (nzOnCancel)="onToggleModal(false)"
+  (nzOnOk)="onToggleModal(false)" nzMaskClosable="false">
+  <div *nzModalTitle class="pen-md-title">
+    {{'ADMIN.ROLE.title' | translate}} -
+    {{( (roleModify && roleModify.code) ? 'COMMON.EDIT' : 'COMMON.ADD') | translate}}
+  </div>
+  <ng-container *nzModalContent class="pen-md-content">
+    <form [formGroup]="addRoleForm" nz-row>
+      <nz-form-item nz-col [nzSpan]="8">
+        <nz-form-control [nzErrorTip]="passErrors" class="pen-pr-10">
+          <label class="pen-label pen-mb-10 pen-block">{{'TABLE.ROLE.ROLE_NAME' | translate}}</label>
+          <nz-input-group class="pen-input-wrapper">
+            <input type="text" nz-input [attr.placeholder]="'TABLE.ROLE.ENTER_ROLE_NAME' | translate"
+              formControlName="roleName" maxlength="256" [disabled]="loading.saving" />
+          </nz-input-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item nz-col [nzSpan]="8">
+        <nz-form-control [nzErrorTip]="passErrors" class="pen-pl-10 pen-pr-10">
+          <app-select-list-layout [label]="'TABLE.ROLE.ROLE_TYPE'">
+            <ng-container body>
+              <nz-select nzShowSearch [nzPlaceHolder]="'TABLE.ROLE.SELECT_ROLE_TYPE' | translate" [nzSuffixIcon]="icon"
+                formControlName="roleType" nzAllowClear>
+                <nz-option [nzLabel]="type.roleTypeName" nzCustomContent [nzValue]="type.roleType"
+                  *ngFor="let type of listRoleType">
+                  <span> {{ type.roleTypeName }}</span>
+                </nz-option>
+              </nz-select>
+
+            </ng-container>
+          </app-select-list-layout>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item nz-col [nzSpan]="8">
+        <nz-form-control class="pen-pl-10">
+          <app-select-list-layout [label]="'TABLE.ROLE.COPY_ROLE'">
+            <ng-container body>
+              <nz-select nzShowSearch [nzPlaceHolder]="'TABLE.ROLE.SELECT_ROLE' | translate" [nzSuffixIcon]="icon"
+                nzAllowClear [(ngModel)]="roleCopy" (ngModelChange)="copyPermission($event)"
+                [ngModelOptions]="{standalone: true}">
+                <nz-option [nzLabel]="role.name" nzCustomContent [nzValue]="role.code"
+                  *ngFor="let role of getListRoleCopy()">
+                  <span> {{ role.name }}</span>
+                </nz-option>
+              </nz-select>
+
+            </ng-container>
+          </app-select-list-layout>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+
+    <ng-template #passErrors let-control>
+      <ng-container *ngIf="control.hasError('required')">
+        {{'error.required' | translate}}
+        <br />
+      </ng-container>
+      <ng-container *ngIf="control.hasError('maxlength')">
+        {{'error.maxlength' | translate:{count: 255} }}
+        <br />
+      </ng-container>
+    </ng-template>
+
+    <ng-template #icon>
+      <svg style="width: 8px; height: 8px;">
+        <use xlink:href="#play-icon-down"></use>
+      </svg>
+    </ng-template>
+
+    <nz-table [nzData]="dataModule.list" [nzShowPagination]="false" nzSize="small"
+      [nzLoading]="loading.saving || loading.permission" [nzScroll]="{ y: '50vh' }"
+      [nzLoadingIndicator]="loadingTemplate">
+      <thead>
+        <tr>
+          <th style="text-align: left !important;" nzWidth="200px">
+            {{ 'TABLE.ROLE.PERMISSION' | translate}}
+          </th>
+          <th nzWidth="60px" class="pen-align-center">
+
+            <div class="pen-flex pen-align-center" style="flex-direction: column;">
+              <span>{{ 'HEAD.ALL' | translate}}</span>
+              <label nz-checkbox [ngModel]="checkAll()" (ngModelChange)="onCheckedAll($event)">
+              </label>
+            </div>
+          </th>
+          <th *ngFor="let action of listActions;let _last = last;let _first=first" class="pen-align-center"
+            nzWidth="60px">
+            <div class="pen-flex pen-align-center" style="flex-direction: column;">
+              <span>{{ 'BTN_' + action.code | translate}}</span>
+              <label nz-checkbox [ngModel]="checkAllAction(action.code)"
+                (ngModelChange)="onCheckedAllByCode($event, action)">
+              </label>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of dataModule.list; let idx = index; let lst = last">
+          <td>
+            <p class="pen-mt-5 pen-mb-5" [class.pen-pl-20]="item.parent">{{ item.name | translate }}</p>
+          </td>
+          <td class="pen-align-center">
+            <label nz-checkbox *ngIf="!item.hasChild" [ngModel]="checkAllModule(item.code)" [nzDisabled]="item.disabled"
+              (ngModelChange)="onCheckedAllModule(item, $event)">
+            </label>
+          </td>
+          <td *ngFor="let _action of item.actions" class="pen-align-center">
+            <label nz-checkbox *ngIf="!item.hasChild" [(ngModel)]="_action.checked" [nzDisabled]="_action.disabled"
+              (ngModelChange)="onCheckAction($event, _action, item)">
+            </label>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </ng-container>
+  <div *nzModalFooter class="pen-md-footer">
+    <button class="pen-mw-100" nz-button nzType="default" nzShape="round" (click)="onToggleModal(false)">
+      {{ 'BTN_CANCEL' | translate}}
+    </button>
+
+    <button [nzLoading]="loading.saving" [disabled]="!addRoleForm.valid" class="pen-mw-100" nz-button nzType="primary"
+      type="submit" nzShape="round" (click)="onSaveRole()" BtnPermission
+      [ActionType]="[systemAction.CREATE, systemAction.UPDATE]">
+      {{ (roleModify && roleModify.code ? 'BTN_SAVE' : 'BTN_ADD') | translate}}
+    </button>
+  </div>
+</nz-modal>
+<ng-template #loadingTemplate>
+  <app-loading></app-loading>
+</ng-template> -->

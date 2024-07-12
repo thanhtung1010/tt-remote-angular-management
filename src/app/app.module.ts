@@ -20,6 +20,11 @@ const routes: Route[] = [
       .then(c => c.ManagerAboutMePageComponent),
   },
   {
+    path: ROUTE.CMS_ADMIN,
+    loadChildren: () => import('./modules/admin/admin.module')
+      .then(m => m.AdminModule),
+  },
+  {
     path: '**',
     pathMatch: 'full',
     redirectTo: ROUTE.CMS_MAIN,
