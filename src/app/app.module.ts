@@ -20,6 +20,11 @@ const routes: Route[] = [
       .then(c => c.ManagerAboutMePageComponent),
   },
   {
+    path: ROUTE.CMS_WINFIT_ONLINE,
+    loadComponent: () => import('./components/winfit-online/winfit-online.component')
+      .then(c => c.WinfitOnlineComponent),
+  },
+  {
     path: ROUTE.CMS_ADMIN,
     loadChildren: () => import('./modules/admin/admin.module')
       .then(m => m.AdminModule),

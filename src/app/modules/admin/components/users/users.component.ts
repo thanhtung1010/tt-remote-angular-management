@@ -165,7 +165,6 @@ export class UsersComponent implements OnInit {
             ...item,
           }
         });
-        console.log(this.userData);
         this.loading.list = false;
       },
       error: error => {
