@@ -1,41 +1,33 @@
 <tt-manager-page-layout>
   <ng-container header>
     <ng-container header-title>
-      <h2 class="tt-page-title pen-mb-10">
-        {{'MENU.CMS_WINFIT_ONLINE' | translate}}
+      <h2 class="tt-page-title pen-mb-10 tt-koho tt-bold">
+        {{('MENU.CMS_WINFIT_ONLINE' | translate) | uppercase}}
       </h2>
     </ng-container>
   </ng-container>
   <ng-container body>
     <tt-table-layout
-      [props]="{data: winfitData, showExpand: false, minWidth: 980, showTable: !loading.divisions, showReset: false}"
+      [props]="{data: winfitData, showExpand: false, minWidth: 980, showRefresh: false, showTable: false}"
       (oChangeParams)="onSearch($event)" [loading]="loading.list" (oRefresh)="onRefresh()" (oReset)="onReset()">
       <ng-container filter-main>
-        <!-- <div nz-col nzXXl="8" nzXl="8" nzLg="8" nzSm="24" nzXs="24" class="tt-pr-10">
-          <tt-search-input-layout [label]="'LABEL.USER_INPUT'">
+        <div nz-col [nzXXl]="8" [nzLg]="8" [nzMd]="18" [nzSm]="24" [nzXs]="24" class="tt-pr-10">
+          <tt-search-input-layout [label]="'TABLE.CUSTOMER_NAME_WINFIT'">
             <ng-container body>
-              <input maxlength="120" nz-input placeholder="{{'PLACEHOLDER.USER_INPUT' | translate}}" (keyup.enter)="onSearch()" />
+              <input maxlength="120" nz-input [placeholder]="'PLACEHOLDER.CUSTOMER_NAME_INPUT_WINFIT' | translate" (keyup.enter)="onSearch()"
+                [(ngModel)]="params.customerName"/>
             </ng-container>
           </tt-search-input-layout>
         </div>
-        <div nz-col nzXXl="8" nzXl="8" nzLg="8" nzSm="24" nzXs="24" class="tt-pr-10">
-          <tt-select-list-layout [label]="'LABEL.ROLE_SELECT'">
-            <ng-container body>
-              <nz-select [nzPlaceHolder]="'PLACEHOLDER.ROLE_SELECT' | translate" [nzSuffixIcon]="icon" nzAllowClear (ngModelChange)="onSearch()" nzShowSearch>
-                <nz-option [nzValue]="item.code" [nzLabel]="item.name" *ngFor="let item of data.roles"></nz-option>
-              </nz-select>
-            </ng-container>
-          </tt-select-list-layout>
-        </div> -->
       </ng-container>
       <ng-container filter-button>
-        <!-- <ng-container [ngTemplateOutlet]="buttons"></ng-container> -->
+        <ng-container [ngTemplateOutlet]="buttons"></ng-container>
       </ng-container>
       <ng-container filter-right-button>
       </ng-container>
       <ng-container custom-body>
         <nz-table #stc90DaysTable [nzData]="winfitData" [nzShowPagination]="false" [nzLoading]="loading.list"
-          [nzSize]="'small'" [nzScroll]="data.nzScroll" [nzFrontPagination]="false" [nzVirtualItemSize]="20">
+          [nzSize]="'small'" [nzScroll]="{y: data.nzScroll.y, x: data.nzScroll.x + 'px'}" [nzFrontPagination]="false" [nzVirtualItemSize]="20">
           <!-- (nzQueryParams)="onSearchTableParams($event)"> -->
           <thead>
             <tr>
@@ -76,7 +68,16 @@
                   {{ item.bmi }}
                 </td>
                 <td *ngIf="(dataColumnShows$ | async)?.includes(columnsField.action)">
-                  <!-- {{ item.action }} -->
+                  <div class="tt-col-action" [ngClass]="{'tt-disabled': loading.detail || loading.delete}">
+                    <div>
+                      <button nz-button nzType="text" (click)="onClickEditItem(item.firebaseID)">
+                        <img loading="lazy" [src]="'edit' | TTAssetsLink:'svg'" [alt]="'edit.svg'" style="height: 25px; width: 25px;">
+                      </button>
+                      <button nz-button nzType="text" (click)="onClickDeleteItem(item.firebaseID)">
+                        <img loading="lazy" [src]="'delete' | TTAssetsLink:'svg'" [alt]="'delete.svg'" style="height: 25px; width: 25px;">
+                      </button>
+                    </div>
+                  </div>
                 </td>
               </tr>
             </ng-template>
@@ -95,104 +96,329 @@
   </button>
 </ng-template>
 
-<nz-modal nzWidth="50vw" [nzCloseIcon]="''" [(nzVisible)]="isVisibleModal" (nzOnCancel)="isVisibleModal = false"
-  (nzOnOk)="isVisibleModal = false" [nzMaskClosable]="false" [nzClassName]="'pen-md'">
-  <div *nzModalTitle class="pen-md-title">
-    <!-- {{'ADMIN.USER_MNGT.title_modal' | translate}} -
-    {{(data.userMd !== undefined && data.userMd['userId'] ? 'COMMON.EDIT' : 'COMMON.ADD') | translate}} -->
-  </div>
-  <ng-container *nzModalContent class="pen-md-content">
-    <form autocomplete="off" nz-row nz-form (ngSubmit)="submitMdForm()" [formGroup]="validateMdForm">
-      <input autocomplete="false" type="hidden" />
-      <ng-container *ngIf="!loading.detail">
-        <!-- <nz-form-item nz-col nzSpan="24" class="pen-pr-10 pen-mb-0">
-          <nz-form-control nzSpan="24" [nzErrorTip]="controlErrorTpl">
-            <label nz-col class="pen-label pen-mb-10 pen-block pen-required">{{'TABLE.FULL_NAME' | translate}}</label>
-            <nz-input-group class="pen-input-wrapper">
-              <input formControlName="fullName" type="text" nz-input [attr.maxlength]="255"
-                [attr.placeholder]="'TABLE.FULL_NAME' | translate" />
-            </nz-input-group>
-          </nz-form-control>
-        </nz-form-item> -->
-        <div nz-row style="width: 100%">
-          <!-- User Name -->
-          <!-- <nz-form-item nz-col nzXXl="6" nzXl="6" nzLg="6" nzMd="24" nzXs="24" class="pen-pr-10">
-            <nz-form-control nzSpan="24" [nzErrorTip]="controlErrorTpl">
-              <label nz-col class="pen-label pen-mb-10 pen-block pen-required">{{'TABLE.USER_NAME' | translate}}</label>
-              <nz-input-group class="pen-input-wrapper">
-                <input *ngIf="!data.userMd.userId" formControlName="username" type="text" nz-input autocomplete="off"
-                  [attr.placeholder]="'TABLE.USER_NAME' | translate" [attr.maxlength]="lengthUI.max_input" />
-                <input nz-input disabled value="{{data.userMd.username}}" *ngIf="data.userMd.userId" nz-input />
-              </nz-input-group>
-            </nz-form-control>
-          </nz-form-item> -->
-          <!-- Email -->
-          <!-- <nz-form-item nz-col nzXXl="6" nzXl="6" nzLg="6" nzMd="24" nzXs="24" class="pen-pr-10">
-            <nz-form-control nzSpan="24" [nzErrorTip]="controlErrorTpl">
-              <label nz-col
-                [classList]="'pen-label pen-mb-10 pen-block ' + (isExtUserChecked ? '' : 'pen-required')">{{'TABLE.EMAIL'
-                | translate}}</label>
-              <nz-input-group class="pen-input-wrapper">
-                <input formControlName="email" [attr.maxlength]="lengthUI.max_input" nz-input
-                  [attr.placeholder]="'TABLE.EMAIL' | translate" />
-              </nz-input-group>
-            </nz-form-control>
-          </nz-form-item> -->
-          <!-- Role -->
-          <!-- <div nz-col nzXXl="6" nzXl="6" nzLg="6" nzMd="24" nzXs="24" class="pen-pr-10">
-            <nz-form-item nz-col nzSpan="24" class="pen-pr-10">
-              <nz-form-control nzSpan="24" [nzErrorTip]="controlErrorTpl">
-                <app-select-list-layout [label]="'ADMIN.ROLE.title'" [required]="true">
-                  <ng-container body>
-                    <nz-select formControlName="roleName" [nzPlaceHolder]="'ADMIN.ROLE.title' | translate"
-                      [nzSuffixIcon]="icon" nzShowSearch (ngModelChange)="onChangeRole($event)">
-                      <nz-option [nzValue]="item.code" [nzLabel]="item.name" *ngFor="let item of data.roles">
-                      </nz-option>
-                    </nz-select>
-                  </ng-container>
-                </app-select-list-layout>
-              </nz-form-control>
-            </nz-form-item>
-          </div> -->
-        </div>
-      </ng-container>
-      <!-- <ng-container *ngIf="loading.detail">
-        <div class="pen-mh-200 pen-align-center" style="width: 100%;">
-          <app-loading></app-loading>
-        </div>
-      </ng-container> -->
+<nz-modal [nzClassName]="'tt-wo-modal'" [(nzVisible)]="isVisibleModal" [nzCloseIcon]="''">
+  <ng-container *nzModalTitle></ng-container>
 
-      <!-- <ng-template #controlErrorTpl let-control>
-        <ng-container [ngSwitch]="firstErrorsByControl(control)">
-          <ng-container *ngSwitchCase="'required'">
-            {{'error.required' | translate}}
-          </ng-container>
-          <ng-container *ngSwitchCase="'emailPattern'">
-            {{'error.email' | translate}}
-          </ng-container>
-          <ng-container *ngSwitchCase="'minlength'">
-            {{'error.minlength' |
-            translate:{count: 8} }}</ng-container>
-          <ng-container *ngSwitchCase="'whitespace'">
-            {{'error.whitespace' | translate:{count: 8} }}
-          </ng-container>
-          <ng-container *ngSwitchDefault>
-          </ng-container>
-        </ng-container>
-      </ng-template> -->
-    </form>
+  <ng-container *nzModalContent>
+    <section class="tt-wo-modal-content">
+      <!-- base info -->
+       <section class="tt-wo-modal-section" [ngClass]="{'tt-disabled': loading.save}">
+        <label class="tt-wo-modal-section-head tt-label">{{('TABLE.BASIC_INFO_WINFIT' | translate) | uppercase}}</label>
+        <form nz-row [formGroup]="detailForm">
+          <section class="tt-wo-modal-edit-left" nz-col [nzXXl]="12" [nzLg]="12" [nzMd]="16" [nzSm]="20" [nzXs]="24">
+            <ng-container *ngIf="detailForm.contains('customerName')">
+              <nz-form-item>
+                <nz-form-control>
+                  <label class="tt-label tt-required">{{"LABEL.CUSTOMER_NAME_INPUT_WINFIT" | translate}}</label>
+                  <input nz-input formControlName="customerName" [placeholder]="'PLACEHOLDER.CUSTOMER_NAME_INPUT_WINFIT' | translate" />
+                </nz-form-control>
+              </nz-form-item>
+            </ng-container>
+
+            <ng-container *ngIf="detailForm.contains('customerEmail')">
+              <nz-form-item>
+                <nz-form-control>
+                  <label class="tt-label">{{"LABEL.CUSTOMER_EMAIL_INPUT_WINFIT" | translate}}</label>
+                  <input nz-input formControlName="customerEmail" type="email" [placeholder]="'PLACEHOLDER.CUSTOMER_EMAIL_INPUT_WINFIT' | translate" />
+                </nz-form-control>
+              </nz-form-item>
+            </ng-container>
+
+            <ng-container *ngIf="detailForm.contains('customerPhoneNumber')">
+              <nz-form-item>
+                <nz-form-control>
+                  <label class="tt-label">{{"LABEL.CUSTOMER_PHONE_NUMBER_INPUT_WINFIT" | translate}}</label>
+                  <input nz-input type="number" formControlName="customerPhoneNumber"
+                    [placeholder]="'PLACEHOLDER.CUSTOMER_PHONE_NUMBER_INPUT_WINFIT' | translate" />
+                </nz-form-control>
+              </nz-form-item>
+            </ng-container>
+
+            <ng-container *ngIf="detailForm.contains('gender')">
+              <nz-form-item>
+                <nz-form-control>
+                  <label class="tt-label tt-required">{{"GENDER.INDEX_WINFIT" | translate}}</label>
+                  <nz-radio-group formControlName="gender" (ngModelChange)="onChangeFormValue('gender')">
+                    <label nz-radio [nzValue]="true">{{"GENDER.MAN_WINFIT" | translate}}</label>
+                    <label nz-radio [nzValue]="false">{{"GENDER.WOMAN_WINFIT" | translate}}</label>
+                  </nz-radio-group>
+                </nz-form-control>
+              </nz-form-item>
+            </ng-container>
+          </section>
+          <section class="tt-wo-modal-edit-right" nz-col [nzXl]="12" [nzXXl]="12" [nzLg]="12" [nzMd]="16" [nzSm]="20" [nzXs]="24">
+            <ng-container *ngIf="detailForm.contains('age')">
+              <nz-form-item>
+                <nz-form-control>
+                  <label class="tt-label tt-required">{{'TABLE.ABOUT_AGE' | translate}}:</label>
+                  <input nz-input type="number" formControlName="age" [placeholder]="'PLACEHOLDER.AGE_INPUT' | translate" (blur)="onChangeFormValue('age')"/>
+                </nz-form-control>
+              </nz-form-item>
+            </ng-container>
+
+            <ng-container *ngIf="detailForm.contains('heightIndex')">
+              <nz-form-item>
+                <nz-form-control>
+                  <label class="tt-label tt-required">{{"LABEL.HEIGHT_INPUT_WINFIT" | translate}}</label>
+                  <input nz-input type="number" formControlName="heightIndex" [placeholder]="'PLACEHOLDER.HEIGHT_INPUT' | translate" (blur)="onChangeFormValue('heightIndex')"/>
+                </nz-form-control>
+              </nz-form-item>
+            </ng-container>
+
+            <ng-container *ngIf="detailForm.contains('weightIndex')">
+              <nz-form-item>
+                <nz-form-control>
+                  <label class="tt-label tt-required">{{"LABEL.WEIGHT_INPUT_WINFIT" | translate}}</label>
+                  <input nz-input type="number" formControlName="weightIndex" [placeholder]="'PLACEHOLDER.WEIGHT_INPUT' | translate" (blur)="onChangeFormValue('weightIndex')"/>
+                </nz-form-control>
+              </nz-form-item>
+            </ng-container>
+
+            <div class="tt-wo-basic-info-item">
+              <label class="tt-label">{{'TABLE.WATER_NEEDED_WINFIT' | translate}}:</label>
+              <p>{{data.detail.waterNeeded + ' ' + ('TABLE.WATER_WINFIT' | translate)}}</p>
+            </div>
+          </section>
+        </form>
+      </section>
+
+      <!-- BMR -->
+      <section class="tt-wo-modal-section tt-wo-modal-section-bmr" [ngClass]="{'tt-disabled': loading.save}">
+        <label class="tt-wo-modal-section-head tt-label">{{('TABLE.EXPLAIN_INDEX_BMR' | translate) | uppercase}}</label>
+        <nz-table [nzShowPagination]="false" [nzSize]="'small'" [nzData]="baseWinfitOnlineData.baseMBRData" [nzScroll]="{x: '700px'}">
+          <thead>
+            <tr>
+              <th [nzWidth]="'100px'">
+                {{ ('TABLE.BMR' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'100px'">
+                {{ ('TABLE.ABOUT_AGE' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'300px'">
+                {{ ('TABLE.INDEX_BMR' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'100px'">
+                {{ ('TABLE.MAN' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'100px'">
+                {{ ('TABLE.WOMAN' | translate) | uppercase }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let bmr of baseWinfitOnlineData.baseMBRData; let index = index">
+              <tr [ngClass]="{'tt-background-green': data.detail.age >= bmr.ageFrom && data.detail.age <= bmr.ageTo}">
+                <ng-container *ngIf="index === 0">
+                  <td [rowSpan]="7" [ngClass]="{'tt-bold tt-koho': data.detail.age >= bmr.ageFrom && data.detail.age <= bmr.ageTo}">
+                    <p>{{data.detail.bmr.mifflinStJeor}}</p>
+                  </td>
+                </ng-container>
+                <td [ngClass]="{'tt-bold tt-koho': data.detail.age >= bmr.ageFrom && data.detail.age <= bmr.ageTo}">
+                  <ng-container *ngIf="bmr.ageTo; else emptyAgeTo">
+                    {{bmr.ageFrom + ' - ' + bmr.ageTo}}
+                  </ng-container>
+
+                  <ng-template #emptyAgeTo>
+                    {{'>= ' + bmr.ageFrom}}
+                  </ng-template>
+                </td>
+                <td [ngClass]="{'tt-bold tt-koho': data.detail.age >= bmr.ageFrom && data.detail.age <= bmr.ageTo}">
+                  <ng-container *ngIf="data.detail.age >= bmr.ageFrom && data.detail.age <= bmr.ageTo">
+                    <div [innerHTML]="data.detail | TTBMRPerAge"></div>
+                  </ng-container>
+                </td>
+                <td [ngClass]="{'tt-bold tt-koho': data.detail.age >= bmr.ageFrom && data.detail.age <= bmr.ageTo}">
+                  {{bmr.manBMR}}
+                </td>
+                <td [ngClass]="{'tt-bold tt-koho': data.detail.age >= bmr.ageFrom && data.detail.age <= bmr.ageTo}">
+                  {{bmr.womanBMR}}
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </nz-table>
+      </section>
+
+      <!-- BMI -->
+      <section class="tt-wo-modal-section tt-wo-modal-section-bmi" [ngClass]="{'tt-disabled': loading.save}">
+        <label class="tt-wo-modal-section-head tt-label">{{('TABLE.INDEX_BMI' | translate) | uppercase}}</label>
+        <nz-table [nzShowPagination]="false" [nzSize]="'small'" [nzData]="baseWinfitOnlineData.baseMBIData" [nzScroll]="{x: '450px'}">
+          <thead>
+            <tr>
+              <th [nzWidth]="'100px'">
+                {{ ('TABLE.BMI' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'150px'">
+                {{ ('TABLE.EXPLAIN_BMI' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'200px'">
+                {{ ('TABLE.TYPE' | translate) | uppercase }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let bmi of baseWinfitOnlineData.baseMBIData; let index = index">
+              <tr [ngClass]="{'tt-background-green': data.detail.bmi >= bmi.bmiFrom && data.detail.bmi <= bmi.bmiTo}">
+                <ng-container *ngIf="index === 0">
+                  <td [rowSpan]="5" [ngClass]="{'tt-bold tt-koho': data.detail.bmi >= bmi.bmiFrom && data.detail.bmi <= bmi.bmiTo}">
+                    <p>{{data.detail.bmi}}</p>
+                  </td>
+                </ng-container>
+                <td [ngClass]="{'tt-bold tt-koho': data.detail.bmi >= bmi.bmiFrom && data.detail.bmi <= bmi.bmiTo}">
+                  {{bmi.bmiFrom + ' - ' + bmi.bmiTo}}
+                </td>
+                <td [ngClass]="{'tt-bold tt-koho': data.detail.bmi >= bmi.bmiFrom && data.detail.bmi <= bmi.bmiTo}">
+                  {{bmi.type | translate}}
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </nz-table>
+      </section>
+
+      <!-- body fat -->
+      <section class="tt-wo-modal-section tt-wo-modal-section-bodyfat" [ngClass]="{'tt-disabled': loading.save}">
+        <label class="tt-wo-modal-section-head tt-label">{{('TABLE.INDEX_BODY_FAT' | translate) | uppercase}}</label>
+        <nz-table [nzShowPagination]="false" [nzSize]="'small'" [nzData]="baseWinfitOnlineData.baseBodyFatData" [nzScroll]="{x: '350px'}">
+          <thead>
+            <tr>
+              <th [nzWidth]="'100px'">
+                {{ ('TABLE.MAN' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'100px'">
+                {{ ('TABLE.WOMAN' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'150px'">
+                {{ ('TABLE.TYPE' | translate) | uppercase }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let bdf of baseWinfitOnlineData.baseBodyFatData; let index = index">
+              <tr>
+                <td>
+                  <ng-container *ngIf="bdf.indexForManTo; else emptyManTo">
+                    {{bdf.indexForManFrom + ' - ' + bdf.indexForManTo}}
+                  </ng-container>
+
+                  <ng-template #emptyManTo>
+                    {{'>= ' + bdf.indexForManFrom}}
+                  </ng-template>
+                </td>
+                <td>
+                  <ng-container *ngIf="bdf.indexForWomanTo; else emptyManTo">
+                    {{bdf.indexForWomanFrom + ' - ' + bdf.indexForWomanTo}}
+                  </ng-container>
+
+                  <ng-template #emptyManTo>
+                    {{'>= ' + bdf.indexForWomanFrom}}
+                  </ng-template>
+                </td>
+                <td>
+                  {{bdf.type | translate}}
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </nz-table>
+      </section>
+
+      <!-- visceral fat -->
+      <section class="tt-wo-modal-section tt-wo-modal-section-visceralfat" [ngClass]="{'tt-disabled': loading.save}">
+        <label class="tt-wo-modal-section-head tt-label">{{('TABLE.INDEX_VISCERAL_FAT' | translate) | uppercase}}</label>
+        <nz-table [nzShowPagination]="false" [nzSize]="'small'" [nzData]="baseWinfitOnlineData.baseVisceralFatData" [nzScroll]="{x: '350px'}">
+          <thead>
+            <tr>
+              <th [nzWidth]="'200px'">
+                {{ ('TABLE.VISCERAL_FAT_LEVEL' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'150px'">
+                {{ ('TABLE.TYPE' | translate) | uppercase }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let bvf of baseWinfitOnlineData.baseVisceralFatData; let index = index">
+              <tr>
+                <td>
+                  <ng-container *ngIf="bvf.levelVisceralFatTo; else emptyManTo">
+                    {{bvf.levelVisceralFatFrom + ' - ' + bvf.levelVisceralFatTo}}
+                  </ng-container>
+
+                  <ng-template #emptyManTo>
+                    {{'>= ' + bvf.levelVisceralFatFrom}}
+                  </ng-template>
+                </td>
+                <td>
+                  {{bvf.type | translate}}
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </nz-table>
+      </section>
+
+      <!-- skeletal muscles -->
+      <section class="tt-wo-modal-section tt-wo-modal-section-skeletalmescles" [ngClass]="{'tt-disabled': loading.save}">
+        <label class="tt-label">{{('TABLE.INDEX_SKELETAL_MUSCLES' | translate) | uppercase}}</label>
+        <nz-table [nzShowPagination]="false" [nzSize]="'small'" [nzData]="baseWinfitOnlineData.baseSkeletalMusclesData" [nzScroll]="{x: '600px'}">
+          <thead>
+            <tr>
+              <th [nzWidth]="'100px'"></th>
+              <th [nzWidth]="'100px'">
+                {{ ('TABLE.LOW' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'150px'">
+                {{ ('TABLE.NORMAL' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'100px'">
+                {{ ('TABLE.GOOD' | translate) | uppercase }}
+              </th>
+              <th [nzWidth]="'150px'">
+                {{ ('TABLE.VERY_GOOD' | translate) | uppercase }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let bsm of baseWinfitOnlineData.baseSkeletalMusclesData; let index = index">
+              <tr>
+                <td>
+                  {{bsm.for | translate}}
+                </td>
+                <td>
+                  {{bsm.lowFrom + ' - ' + bsm.lowTo}}
+                </td>
+                <td>
+                  {{bsm.normalFrom + ' - ' + bsm.normalTo}}
+                </td>
+                <td>
+                  {{bsm.goodFrom + ' - ' + bsm.goodTo}}
+                </td>
+                <td>
+                  {{bsm.veryGoodFrom + ' - ' + bsm.veryGoodTo}}
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </nz-table>
+      </section>
+
+      <!-- fotter -->
+       <section class="tt-wo-modal-section tt-wo-modal-section-footer">
+          <button nz-button nzType="default" nzSize="default" nzShape="round" (click)="onToggleVisibleEditItemModal(false)">
+            {{'BUTTON.CANCEL_WINFIT' | translate}}
+          </button>
+          <button nz-button nzType="primary" nzSize="default" nzShape="round" (click)="onClickSaveWinfitItem()" [disabled]="detailForm.invalid"
+            [nzLoading]="loading.save">
+            {{'BUTTON.SAVE_WINFIT' | translate}}
+          </button>
+       </section>
+    </section>
   </ng-container>
-  <div *nzModalFooter class="pen-md-footer">
-    <!-- <button class="pen-mw-100" nz-button nzType="default" nzShape="round" (click)="onToggleModal(false)">
-      {{ 'BTN_CANCEL' | translate}}
-    </button>
-    <button [nzLoading]="loading.saving" [disabled]="loading.detail && !validateMdForm.valid" class="pen-mw-100"
-      nz-button nzType="primary" nzShape="round" (click)="onSaveUser()" BtnPermission
-      [ActionType]="[systemAction.CREATE, systemAction.UPDATE]">
-      {{ (data.userMd['userId'] ? 'BTN_SAVE' : 'BTN_ADD') | translate}}
-    </button> -->
-  </div>
+
+  <ng-container *nzModalFooter></ng-container>
 </nz-modal>
+
 <ng-template #icon>
   <svg style="width: 8px; height: 8px;">
     <use xlink:href="#play-icon-down"></use>

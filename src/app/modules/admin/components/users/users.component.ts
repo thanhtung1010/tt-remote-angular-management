@@ -31,7 +31,6 @@ export class UsersComponent implements OnInit {
   dataOutput: any = {};
   userData: IFirestoreUser[] = [];
   data = {
-    currentUserId: '',
     roles: [] as any[],
     externalUser: '',
     columnShows: [] as string[],
@@ -148,7 +147,6 @@ export class UsersComponent implements OnInit {
 
   ngOnInit(): void {
     this.parseParams();
-    this.data.currentUserId = this.userService._uuid;
     this.validatorMd();
     this.data.columnShows = this.tableHeader.map(elm => elm.field);
     this.dataColumnShows$.next(this.data.columnShows);
@@ -158,7 +156,7 @@ export class UsersComponent implements OnInit {
   //#region Api call
   getList() {
     this.loading.list = true;
-    this.firebaseService.getCollection(this.collectionName).subscribe({
+    this.firebaseService.getCollection(this.collectionName, this.userService._uuid).subscribe({
       next: resp => {
         this.userData = resp.map((item: any) => {
           return {
