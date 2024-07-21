@@ -155,9 +155,6 @@ export class WinfitOnlineComponent implements OnInit {
 
     this.winfitService.baseIndexWinfit$.subscribe(resp => {
       this.data.detail = resp;
-      if (!this.detailForm) {
-        this.initDetailForm(resp);
-      }
     });
   }
 
@@ -193,6 +190,7 @@ export class WinfitOnlineComponent implements OnInit {
     this.firebaseService.searchDocumentWithID<IFirestoreWinfitOnline>(this.collectionName, this.userService._uuid, id).subscribe(resp => {
       if (resp) {
         this.winfitService.setIndexWinfit = new BaseIndexWinfitModel(resp);
+        this.initDetailForm(resp);
       } else {
         this.commonService.showError();
         this.data.currentID = '';
@@ -360,6 +358,7 @@ export class WinfitOnlineComponent implements OnInit {
     this.isVisibleModal = visible;
     if (!visible) {
       this.data.currentID = '';
+      this.detailForm.reset();
     }
   }
   // #endregion
