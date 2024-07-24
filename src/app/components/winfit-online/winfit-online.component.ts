@@ -21,6 +21,7 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
+import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { BehaviorSubject } from 'rxjs';
 import {
   AssetsLink,
@@ -31,6 +32,7 @@ import {
   Helpers,
   IAntTableElement,
   IApiBaseMeta,
+  IBaseWinfitOnlineData,
   IFirestoreCustomerWinfitOnline,
   IFirestoreWinfitOnline,
   ManagerPageLayoutComponent,
@@ -38,9 +40,10 @@ import {
   SelectListLayoutComponent,
   TableLayoutComponent,
   UserService,
-  WinfitOnlineService
+  WinfitOnlineService,
+  BMRPerAgePipe,
+  NaNNumberPipe,
 } from 'tt-library-angular-porfolio';
-import { BMRPerAgePipe } from '../../_pipes';
 
 @Component({
   selector: 'tt-winfit-online',
@@ -57,6 +60,7 @@ import { BMRPerAgePipe } from '../../_pipes';
     SelectListLayoutComponent,
     ManagerPageLayoutComponent,
     AssetsLink,
+    NaNNumberPipe,
     BMRPerAgePipe,
     NzSelectModule,
     NzToolTipModule,
@@ -67,7 +71,8 @@ import { BMRPerAgePipe } from '../../_pipes';
     NzInputModule,
     NzGridModule,
     NzRadioModule,
-  ]
+    NzCollapseModule,
+  ],
 })
 export class WinfitOnlineComponent implements OnInit {
   //#region Variable
@@ -76,13 +81,18 @@ export class WinfitOnlineComponent implements OnInit {
     detail: new BaseIndexWinfitModel(null),
     columnShows: [] as string[],
     nzScroll: { x: 2400, y: '60vh' },
-  }
+  };
   loading = {
     list: false,
     detail: false,
     save: false,
     delete: false,
-  }
+  };
+  activeCollapse = {
+    impactBMIBMR: false,
+    impactBMR: false,
+    impactBMI: false,
+  };
   columnsField = {
     customerName: 'customerName',
     customerPhoneNumber: 'customerPhoneNumber',
@@ -96,47 +106,49 @@ export class WinfitOnlineComponent implements OnInit {
   };
 
   detailForm!: FormGroup;
-  baseWinfitOnlineData = this.winfitService.baseWinfitOnlineData;
+  baseWinfitOnlineData: IBaseWinfitOnlineData | null = null;
   winfitData: IFirestoreWinfitOnline[] = [];
   tableHeader: IAntTableElement<string>[] = [
     {
-      title: "TABLE.CUSTOMER_NAME_WINFIT",
+      title: 'TABLE.CUSTOMER_NAME_WINFIT',
       field: this.columnsField.customerName,
       width: 170,
     },
     {
-      title: "TABLE.CUSTOMER_PHONE_NUMBER_WINFIT",
+      title: 'TABLE.CUSTOMER_PHONE_NUMBER_WINFIT',
       field: this.columnsField.customerPhoneNumber,
       width: 150,
     },
     {
-      title: "TABLE.CUSTOMER_EMAIL_WINFIT",
+      title: 'TABLE.CUSTOMER_EMAIL_WINFIT',
       field: this.columnsField.customerEmail,
       width: 170,
     },
     {
-      title: "TABLE.BMR",
+      title: 'TABLE.BMR',
       field: this.columnsField.bmr,
       width: 100,
       align: 'right',
     },
     {
-      title: "TABLE.BMI",
+      title: 'TABLE.BMI',
       field: this.columnsField.bmi,
       width: 100,
       align: 'right',
     },
     {
-      title: "TABLE.ACTION",
+      title: 'TABLE.ACTION',
       field: this.columnsField.action,
       width: 130,
       align: 'center',
-    }
+    },
   ];
 
   isVisibleModal = false;
   collectionName: string = FIRESTORE_COLLECTION.WINFIT_ONLINE;
-  dataColumnShows$: BehaviorSubject<string[]> = new BehaviorSubject(this.data.columnShows);
+  dataColumnShows$: BehaviorSubject<string[]> = new BehaviorSubject(
+    this.data.columnShows
+  );
   //#endregion
   constructor(
     private userService: UserService,
@@ -144,40 +156,45 @@ export class WinfitOnlineComponent implements OnInit {
     private commonService: CommonService,
     private firebaseService: FirebaseService,
     private router: Router,
-    private winfitService: WinfitOnlineService,
-  ) { }
+    private winfitService: WinfitOnlineService
+  ) {}
 
   ngOnInit(): void {
     this.parseParams();
-    this.data.columnShows = this.tableHeader.map(elm => elm.field);
+    this.data.columnShows = this.tableHeader.map((elm) => elm.field);
     this.dataColumnShows$.next(this.data.columnShows);
     this.calcTableWidth();
 
-    this.winfitService.baseIndexWinfit$.subscribe(resp => {
+    this.winfitService.baseIndexWinfit$.subscribe((resp) => {
       this.data.detail = resp;
+    });
+
+    this.winfitService.baseWinfitOnlineData$.subscribe((resp) => {
+      this.baseWinfitOnlineData = resp;
     });
   }
 
   //#region Api call
   getList() {
     this.loading.list = true;
-    this.firebaseService.searchDocument(
-      this.collectionName,
-      this.userService._uuid,
-      {field: 'customerName', value: this.params.customerName}
-    ).subscribe({
-      next: resp => {
-        this.winfitData = resp.map((item: any) => {
-          return {
-            ...item,
-          }
-        });
-        this.loading.list = false;
-      },
-      error: error => {
-        this.loading.list = false;
-      },
-    });
+    this.firebaseService
+      .searchDocument(this.collectionName, this.userService._uuid, {
+        field: 'customerName',
+        value: this.params.customerName,
+      })
+      .subscribe({
+        next: (resp) => {
+          this.winfitData = resp.map((item: any) => {
+            return {
+              ...item,
+            };
+          });
+          this.loading.list = false;
+        },
+        error: (error) => {
+          this.loading.list = false;
+        },
+      });
   }
 
   getDetail(id: string) {
@@ -187,16 +204,22 @@ export class WinfitOnlineComponent implements OnInit {
     }
 
     this.loading.detail = true;
-    this.firebaseService.searchDocumentWithID<IFirestoreWinfitOnline>(this.collectionName, this.userService._uuid, id).subscribe(resp => {
-      if (resp) {
-        this.winfitService.setIndexWinfit = new BaseIndexWinfitModel(resp);
-        this.initDetailForm(resp);
-      } else {
-        this.commonService.showError();
-        this.data.currentID = '';
-      }
-      this.loading.detail = false;
-    });
+    this.firebaseService
+      .searchDocumentWithID<IFirestoreWinfitOnline>(
+        this.collectionName,
+        this.userService._uuid,
+        id
+      )
+      .subscribe((resp) => {
+        if (resp) {
+          this.winfitService.setIndexWinfit = new BaseIndexWinfitModel(resp);
+          this.initDetailForm(this.winfitService.baseIndexWinfit);
+        } else {
+          this.commonService.showError();
+          this.data.currentID = '';
+        }
+        this.loading.detail = false;
+      });
   }
 
   deleteWinfitItem(id: string) {
@@ -206,16 +229,18 @@ export class WinfitOnlineComponent implements OnInit {
     }
 
     this.loading.delete = true;
-    this.firebaseService.deleteDocumentWithID<IFirestoreWinfitOnline>(this.collectionName, id).subscribe(resp => {
-      if (resp) {
-        this.commonService.showSuccess();
-        this.getList();
-      } else {
-        this.commonService.showError();
-      }
-      this.loading.delete = false;
-      this.data.currentID = '';
-    });
+    this.firebaseService
+      .deleteDocumentWithID<IFirestoreWinfitOnline>(this.collectionName, id)
+      .subscribe((resp) => {
+        if (resp) {
+          this.commonService.showSuccess();
+          this.getList();
+        } else {
+          this.commonService.showError();
+        }
+        this.loading.delete = false;
+        this.data.currentID = '';
+      });
   }
 
   onClickSaveWinfitItem() {
@@ -229,7 +254,7 @@ export class WinfitOnlineComponent implements OnInit {
     };
     this.winfitService.setIndexWinfit = _value;
 
-    this.winfitService.deleteWinfit(this.data.currentID).subscribe(resp => {
+    this.winfitService.deleteWinfit(this.data.currentID).subscribe((resp) => {
       if (resp) {
         this.onToggleVisibleEditItemModal(false);
         this.detailForm.reset();
@@ -245,8 +270,12 @@ export class WinfitOnlineComponent implements OnInit {
 
   //#region Local functions
   calcTableWidth() {
-    const x = sum(this.tableHeader.map(t => this.isCheckedColumns(t.field) ? t.width || 0 : 0))
-    this.data.nzScroll = { ...this.data.nzScroll, x }
+    const x = sum(
+      this.tableHeader.map((t) =>
+        this.isCheckedColumns(t.field) ? t.width || 0 : 0
+      )
+    );
+    this.data.nzScroll = { ...this.data.nzScroll, x };
   }
 
   isCheckedColumns(field: string): boolean {
@@ -258,18 +287,21 @@ export class WinfitOnlineComponent implements OnInit {
     this.params = {
       ...this.params,
       ...(object || {}),
-    }
+    };
     this.changeUrl();
   }
   changeUrl() {
-    this.router.navigate([], { queryParams: this.params, queryParamsHandling: 'merge' });
+    this.router.navigate([], {
+      queryParams: this.params,
+      queryParamsHandling: 'merge',
+    });
     this.getList();
   }
   onSearch(evt?: IApiBaseMeta) {
     this.changeUrl();
   }
   onReset() {
-    this.params.customerName = "";
+    this.params.customerName = '';
     this.changeUrl();
   }
   onRefresh() {
@@ -285,13 +317,27 @@ export class WinfitOnlineComponent implements OnInit {
       gender: [detail.gender, [this.numberValidate]],
       heightIndex: [detail.heightIndex, [this.numberValidate]],
       weightIndex: [detail.weightIndex, [this.numberValidate]],
+      bodyFatIndex: [detail.bodyFatIndex, []],
+      visceralFatIndex: [detail.visceralFatIndex, []],
+      skeletalMusclesIndex: [detail.skeletalMusclesIndex, []],
     });
     this.onToggleVisibleEditItemModal(true);
   }
 
-  onChangeFormValue(type: 'gender' | 'age' | 'heightIndex' | 'weightIndex') {
+  onChangeFormValue(
+    type:
+      | 'gender'
+      | 'age'
+      | 'heightIndex'
+      | 'weightIndex'
+      | 'bodyFatIndex'
+      | 'visceralFatIndex'
+      | 'skeletalMusclesIndex'
+  ) {
     const _value = this.detailForm.value;
+    this.winfitService.baseIndexWinfit = _value;
     switch (type) {
+      case 'bodyFatIndex':
       case 'gender':
       case 'age':
         if (_value[type] !== this.data.detail[type]) {
@@ -312,12 +358,30 @@ export class WinfitOnlineComponent implements OnInit {
           this.winfitService.calcBMI(_value);
           this.winfitService.calcWaterNeeded(_value);
         }
-      break;
+        break;
+
+      case 'visceralFatIndex':
+      case 'skeletalMusclesIndex':
+        if (_value[type] !== this.data.detail[type]) {
+          this.winfitService.checkActiveBaseData();
+        }
+        break;
 
       default:
         break;
     }
-    this.winfitService.baseIndexWinfit = _value;
+  }
+
+  onToogleActiveImpactBMIBMR(active: boolean) {
+    this.activeCollapse.impactBMIBMR = active;
+  }
+
+  onToogleActiveImpactBMR(active: boolean) {
+    this.activeCollapse.impactBMR = active;
+  }
+
+  onToogleActiveImpactBMI(active: boolean) {
+    this.activeCollapse.impactBMI = active;
   }
 
   numberValidate = (control: AbstractControl): ValidationErrors | null => {
@@ -330,7 +394,7 @@ export class WinfitOnlineComponent implements OnInit {
     }
 
     return null;
-  }
+  };
 
   booleanValidate = (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
@@ -342,7 +406,7 @@ export class WinfitOnlineComponent implements OnInit {
     }
 
     return null;
-  }
+  };
 
   onClickEditItem(id: string) {
     this.data.currentID = id;
